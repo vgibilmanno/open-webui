@@ -164,6 +164,16 @@ def rag_template(template: str, context: str, query: str):
     return template
 
 
+def no_context_template(query: str):
+    return (
+                "You are to perform two tasks:\n"
+                f"1. Detect the language of this user query: {query}\n"
+                "2. Respond ONLY with the phrase 'No context found for the user query' translated "
+                "into the detected language.\n\n"
+                "Do not explain, do not add any other text. Only respond with the translated phrase."
+            )
+
+
 def title_generation_template(
     template: str, messages: list[dict], user: Optional[dict] = None
 ) -> str:

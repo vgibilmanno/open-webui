@@ -1157,6 +1157,12 @@ ENABLE_RAG_HYBRID_SEARCH = PersistentConfig(
     os.environ.get("ENABLE_RAG_HYBRID_SEARCH", "").lower() == "true",
 )
 
+ENABLE_RAG_CONTEXTLESS_CONTINUATION = PersistentConfig(
+    "ENABLE_RAG_CONTEXTLESS_CONTINUATION",
+    "rag.enable_contextless_continuation",
+    os.environ.get("ENABLE_RAG_CONTEXTLESS_CONTINUATION", "true").lower() == "true",
+)
+
 RAG_FILE_MAX_COUNT = PersistentConfig(
     "RAG_FILE_MAX_COUNT",
     "rag.file.max_count",

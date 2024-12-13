@@ -129,6 +129,7 @@ from open_webui.utils.response import (
 )
 from open_webui.utils.security_headers import SecurityHeadersMiddleware
 from open_webui.utils.task import (
+    no_context_template,
     rag_template,
     title_generation_template,
     query_generation_template,
@@ -710,6 +711,8 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             log.exception(e)
 
+        has_retrieved_rag_context = False
+
         # If context is not empty, insert it into the messages
         if len(sources) > 0:
             context_string = ""
@@ -718,6 +721,7 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
 
                 if "document" in source:
                     for doc_idx, doc_context in enumerate(source["document"]):
+                        has_retrieved_rag_context = True
                         metadata = source.get("metadata")
                         doc_source_id = None
 
@@ -743,20 +747,24 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
                     f"With a 0 relevancy threshold for RAG, the context cannot be empty"
                 )
 
+            enable_contextless_continuation = retrieval_app.state.config.ENABLE_RAG_CONTEXTLESS_CONTINUATION
+            if not enable_contextless_continuation and not has_retrieved_rag_context:
+                content = no_context_template(prompt)
+            else:
+                content = rag_template(
+                        retrieval_app.state.config.RAG_TEMPLATE, context_string, prompt
+                    )
+
             # Workaround for Ollama 2.0+ system prompt issue
             # TODO: replace with add_or_update_system_message
             if model["owned_by"] == "ollama":
                 body["messages"] = prepend_to_first_user_message_content(
-                    rag_template(
-                        retrieval_app.state.config.RAG_TEMPLATE, context_string, prompt
-                    ),
+                    content,
                     body["messages"],
                 )
             else:
                 body["messages"] = add_or_update_system_message(
-                    rag_template(
-                        retrieval_app.state.config.RAG_TEMPLATE, context_string, prompt
-                    ),
+                    content,
                     body["messages"],
                 )
 
